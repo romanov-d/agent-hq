@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/banner.png" alt="Agent HQ" width="100%"></p>
+<p align="center"><img src="docs/banner.gif" alt="Agent HQ" width="100%"></p>
 
 # Agent HQ
 

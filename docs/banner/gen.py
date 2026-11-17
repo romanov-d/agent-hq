@@ -4,10 +4,15 @@
 Render it to PNG with headless Chrome:
   chrome --headless=new --force-device-scale-factor=2 --window-size=1280,400 \
          --screenshot=docs/banner.png docs/banner/banner.html
+
+`gen.py --frames 36` also writes docs/banner/frames/f00.html ... with falling snow;
+docs/banner/render.sh turns them into docs/banner.gif (a seamless loop).
 """
 import html
 import os
+import math
 import random
+import sys
 
 random.seed(11)
 FONT = {  # 5x7 pixel letters
@@ -37,7 +42,7 @@ def letters(text):
 grid = [[(" ", None)] * W for _ in range(H)]
 for y in range(H):
     for x in range(W):
-        if random.random() < 0.035:
+        if random.random() < 0.018:
             grid[y][x] = (random.choice("..·*+"), "#3a3a40" if random.random() < .7 else "#6b6b73")
 
 bits = letters("AGENT HQ")
@@ -100,14 +105,41 @@ for row in grid:
         line += f'<span style="color:{cur}">{html.escape(buf)}</span>' if cur else html.escape(buf)
     out.append(line)
 
-page = f"""<!doctype html><meta charset="utf-8"><style>
+def page(snow=""):
+    return f"""<!doctype html><meta charset="utf-8"><style>
 html,body{{margin:0;background:#0B0B0C;width:1280px;height:400px;overflow:hidden}}
 body{{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}}
 pre{{margin:0;padding:0;font:700 14.2px/10px ui-monospace,Menlo,monospace;letter-spacing:-.2px}}
-pre.board{{font:500 14px/18px ui-monospace,Menlo,monospace;letter-spacing:0}}
+pre,.tag{{position:relative;z-index:1}}
+pre.board{{background:#0B0B0C;padding:2px 6px;font:500 14px/18px ui-monospace,Menlo,monospace;letter-spacing:0}}
 .tag{{color:#85858C;font:500 15px ui-monospace,Menlo,monospace;letter-spacing:.04em}}
 </style><pre>{chr(10).join(out)}</pre><pre class="board">{board_html}</pre>
-<div class="tag">memory · tasks · dashboard for Claude Code agents</div>"""
-with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "banner.html"), "w") as f:
-    f.write(page)
+<div class="tag">memory · tasks · dashboard for Claude Code agents</div>{snow}"""
+HERE = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(HERE, "banner.html"), "w") as f:
+    f.write(page())
 print("banner.html written")
+
+# falling snow: every flake moves a whole number of screen heights per loop, so the
+# last frame flows back into the first without a jump
+if "--frames" in sys.argv:
+    n = int(sys.argv[sys.argv.index("--frames") + 1])
+    rnd = random.Random(7)
+    flakes = [dict(x=rnd.uniform(0, 1280), y=rnd.uniform(0, 420), k=rnd.choice([1, 1, 2]),
+                   amp=rnd.uniform(4, 14), ph=rnd.uniform(0, 6.28), ch=rnd.choice("*·+.*"),
+                   size=rnd.uniform(9, 17), op=rnd.uniform(.35, .85)) for _ in range(80)]
+    os.makedirs(os.path.join(HERE, "frames"), exist_ok=True)
+    for i in range(n):
+        t = i / n
+        spans = []
+        for fl in flakes:
+            y = (fl["y"] + fl["k"] * 420 * t) % 420 - 10
+            x = fl["x"] + fl["amp"] * math.sin(2 * math.pi * t + fl["ph"])
+            spans.append(f'<i style="left:{x:.1f}px;top:{y:.1f}px;font-size:{fl["size"]:.0f}px;'
+                         f'opacity:{fl["op"]:.2f}">{fl["ch"]}</i>')
+        snow = ('<div style="position:fixed;inset:0;pointer-events:none;z-index:0">'
+                '<style>i{position:absolute;font-style:normal;color:#dfe5ee;'
+                'font-family:ui-monospace,Menlo,monospace}</style>' + "".join(spans) + "</div>")
+        with open(os.path.join(HERE, "frames", f"f{i:02d}.html"), "w") as f:
+            f.write(page(snow))
+    print(f"{n} frames written")
