@@ -178,6 +178,17 @@ class Server(Base):
         with self.assertRaises(ValueError):
             server.do_action({"action": "rm -rf"})
 
+    def test_deal_edit_pay_delete(self):
+        from agenthq import server
+        did = server.do_action({"action": "deal_add", "client": "Acme", "amount": 500})["id"]
+        server.do_action({"action": "deal_set", "id": did, "amount": "800", "currency": "EUR",
+                          "project_id": "", "next_action": "Call", "next_at": "2030-01-01"})
+        server.do_action({"action": "pay", "id": did, "amount": 800})
+        d = dict(self.conn.execute("SELECT * FROM deals").fetchone())
+        self.assertEqual((d["amount"], d["currency"], d["stage"]), (800.0, "EUR", "paid"))
+        server.do_action({"action": "deal_delete", "id": did})
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM payments").fetchone()[0], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

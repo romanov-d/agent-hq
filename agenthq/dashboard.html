@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agent HQ</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23D97757'/%3E%3Cpath d='M9 9v14M23 9v14M9 16h14' stroke='white' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' rx='9' fill='%23D97757'/%3E%3Crect x='8' y='9' width='16' height='3.4' rx='1.7' fill='%23fff'/%3E%3Crect x='8' y='14.3' width='11' height='3.4' rx='1.7' fill='%23fff' opacity='.85'/%3E%3Crect x='8' y='19.6' width='6.5' height='3.4' rx='1.7' fill='%23fff' opacity='.65'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#0B0B0C;--panel:#151517;--panel-2:#1C1C1F;--line:#26262A;--hover:#202024;
@@ -35,7 +35,7 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.5}
 .wrap{max-width:1440px;margin:0 auto;padding:0 20px 80px}
 header{display:flex;align-items:center;gap:18px;height:64px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line);margin:0 -20px 24px;padding:0 20px}
 .logo{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.01em}
-.logo i{width:22px;height:22px;border-radius:6px;background:var(--accent);display:grid;place-items:center;color:#fff;font:700 12px var(--mono);font-style:normal}
+.logo svg{display:block;flex:none}
 nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
 nav button{padding:7px 12px;border-radius:8px;color:var(--ink-3);white-space:nowrap}
 nav button:hover{background:var(--hover);color:var(--ink-2)}
@@ -53,7 +53,7 @@ h2{font-size:15px;margin:0;font-weight:600}
 .seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
 .grid{display:grid;gap:12px}
 .kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px}
+.card{background:var(--panel);border-radius:var(--r-lg);padding:16px}
 .kpi .v{font:600 26px var(--mono);letter-spacing:-.02em;margin:6px 0 2px}
 .kpi .l{color:var(--ink-3);font-size:12px}
 .two{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);margin-top:12px}
@@ -80,7 +80,7 @@ h2{font-size:15px;margin:0;font-weight:600}
 .tabs2 button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .pgrid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
 .pc{cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:148px}
-.pc:hover{border-color:var(--ink-4)}
+.pc:hover{background:var(--panel-2)}
 .pc .nm{font-weight:600;display:flex;gap:8px;align-items:center}
 .pc .sm{color:var(--ink-3);font-size:13px;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .prog{height:4px;background:var(--panel-2);border-radius:4px;overflow:hidden}
@@ -88,11 +88,11 @@ h2{font-size:15px;margin:0;font-weight:600}
 .meta{display:flex;gap:10px;align-items:center;color:var(--ink-4);font-size:12px;flex-wrap:wrap}
 .grp{margin:24px 0 10px;display:flex;gap:8px;align-items:center}
 .board{display:grid;grid-template-columns:repeat(5,minmax(240px,1fr));gap:10px;overflow-x:auto;padding-bottom:8px}
-.col{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px;min-height:220px}
-.col.drop{border-color:var(--accent);background:var(--accent-soft)}
+.col{background:var(--panel);border-radius:var(--r-lg);padding:10px;min-height:220px}
+.col.drop{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
 .col h3{margin:2px 4px 10px;font-size:12.5px;font-weight:600;display:flex;gap:8px;align-items:center}
-.tc{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;cursor:grab}
-.tc:hover{border-color:var(--ink-4)}
+.tc{background:var(--panel-2);border-radius:10px;padding:10px;margin-bottom:8px;cursor:grab}
+.tc:hover{background:var(--hover)}
 .tc.dragging{opacity:.4}
 .tc .tt{font-size:13.5px;margin-bottom:8px}
 .tc .meta{gap:8px}
@@ -115,6 +115,10 @@ td.sub{padding-left:34px}
 .dt{font-size:19px;font-weight:600;width:100%;background:none;border:0;padding:4px 0;margin-bottom:12px}
 .fields{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;align-items:center;margin-bottom:16px}
 .fields label{color:var(--ink-3);font-size:12.5px}
+.fields>*{min-width:0}
+#drawer input,#drawer select{width:100%;min-width:0}
+#drawer .quick input{width:auto;flex:1}
+#drawer .quick input[name=a]{flex:0 0 170px}
 .entry{padding:10px 0;border-bottom:1px solid var(--line)}
 .entry .h{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--ink-4);margin-bottom:4px}
 .entry .x{white-space:pre-wrap;color:var(--ink-2)}
@@ -123,13 +127,16 @@ td.sub{padding-left:34px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;z-index:30;font-size:13px}
 .deal .amt{font:600 15px var(--mono)}
 .hide{display:none!important}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1}
+header{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 @media (max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.two{grid-template-columns:1fr}}
 @media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:0 14px 60px}header{margin:0 -14px 18px;padding:0 14px;gap:10px}.logo span{display:none}.fields{grid-template-columns:1fr}td.hm,th.hm{display:none}}
 </style></head>
 <body>
-<div class="wrap"><header><div class="logo"><i>H</i><span>Agent HQ</span></div><nav id="nav"></nav>
-<button class="btn sm" id="theme" title="Theme">◐</button></header><main id="app"><p class="muted">Loading…</p></main></div>
-<div id="shade"></div><aside id="drawer"></aside>
+<div class="wrap"><header><div class="logo"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#D97757"/><rect x="8" y="9" width="16" height="3.4" rx="1.7" fill="#fff"/><rect x="8" y="14.3" width="11" height="3.4" rx="1.7" fill="#fff" opacity=".85"/><rect x="8" y="19.6" width="6.5" height="3.4" rx="1.7" fill="#fff" opacity=".65"/></svg><span>Agent HQ</span></div><nav id="nav"></nav>
+<button class="btn sm" id="snowbtn" title="Snow">❄</button><button class="btn sm" id="theme" title="Theme">◐</button></header><main id="app"><p class="muted">Loading…</p></main></div>
+<canvas id="snow" aria-hidden="true"></canvas><div id="shade"></div><aside id="drawer"></aside>
 <script>
 "use strict";
 /* ---------- state ---------- */
@@ -161,8 +168,13 @@ const dueTag=t=>{if(!t.due||!isOpen(t))return'';const c=t.due<S.today?'over':t.d
   return '<span class="small num '+c+'">'+esc(t.due.slice(5))+'</span>'};
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.append(d);setTimeout(()=>d.remove(),2200)}
 
+const deep=new URLSearchParams(location.search).get('open');   // ?open=task:12 | deal:3 | project:5
+let deepDone=false;
 async function load(){
-  try{const r=await fetch('/api/state');S=await r.json();render();}
+  try{const r=await fetch('/api/state');S=await r.json();
+    if(deep&&!deepDone){deepDone=true;const[t,i]=deep.split(':');if(['task','deal','project'].includes(t)&&+i){open={type:t,id:+i};$('#drawer').style.transition='none'}}
+    render();
+    if(S.cost&&S.cost.loading)setTimeout(load,3000);}
   catch(e){$('#app').innerHTML='<p class="muted">Cannot reach the Agent HQ server. Is <code>agent-hq ui</code> running?</p>'}
 }
 async function act(payload,msg){
@@ -191,6 +203,7 @@ document.addEventListener('click',e=>{
   const v=e.target.closest('[data-view]');if(v){view=v.dataset.view;localStorage.setItem('agent-hq.view',view);render();return}
   const t=e.target.closest('[data-task]');if(t&&!e.target.closest('select,button,input')){openTask(+t.dataset.task);return}
   const p=e.target.closest('[data-proj]');if(p&&!e.target.closest('select,button,input')){openProject(+p.dataset.proj);return}
+  const dl=e.target.closest('[data-deal]');if(dl&&!e.target.closest('select,button,input')){open={type:'deal',id:+dl.dataset.deal};renderDrawer();return}
 });
 $('#shade').onclick=()=>closeDrawer();
 document.addEventListener('keydown',e=>{
@@ -226,7 +239,7 @@ function Overview(){
    +k('In progress',doing.length,new Set(doing.map(t=>t.project_id)).size+' projects')
    +k('Needs you',needs.length,needs.filter(t=>t.status==='blocked').length+' blocked · '+needs.filter(t=>t.status==='review').length+' review')
    +k('Overdue',over.length,over.length?'oldest '+over.map(t=>t.due).sort()[0]:'all on time')
-   +k('Agent spend',money(c.total),(c.calls||0).toLocaleString('en-US')+' calls · 30d')
+   +k('Agent spend',c.loading?'…':money(c.total),c.loading?'reading transcripts':(c.calls||0).toLocaleString('en-US')+' calls · 30d')
    +k('Open pipeline',money(pipe),S.deals.filter(d=>d.next_at&&d.next_at<S.today&&!['paid','lost'].includes(d.stage)).length+' follow-ups late')
    +'</div><div class="grid two">'
    +'<div class="card"><div class="ch"><h2>Needs you</h2><span class="small faint">blocked and waiting for review</span></div><div class="list">'
@@ -339,7 +352,7 @@ function openProject(id){open={type:'project',id};renderDrawer()}
 function closeDrawer(){open=null;$('#drawer').classList.remove('open');$('#shade').classList.remove('open')}
 function renderDrawer(){
   const d=$('#drawer');d.classList.add('open');$('#shade').classList.add('open');
-  d.innerHTML=open.type==='task'?taskDrawer():projectDrawer();
+  d.innerHTML=open.type==='task'?taskDrawer():open.type==='deal'?dealDrawer():projectDrawer();
 }
 function fieldSel(name,opts,cur,onch){return '<select onchange="'+onch+'">'+opts.map(([v,t])=>'<option value="'+esc(v)+'"'+(String(cur??'')===String(v)?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'}
 function taskDrawer(){
@@ -387,7 +400,7 @@ function Clients(){
   const st=['lead','talk','proposal','won','invoiced','paid'];
   const open=S.deals.filter(d=>!['paid','lost'].includes(d.stage));
   const received=S.payments.filter(p=>day(p.paid_at)>=shift(-30)).reduce((s,p)=>s+p.amount,0);
-  const dc=d=>'<div class="tc deal" draggable="true" data-id="'+d.id+'"><div class="ch" style="margin:0 0 6px"><b>'+esc(d.client)+'</b><span class="amt">'+money(d.amount,d.currency)+'</span></div>'
+  const dc=d=>'<div class="tc deal" draggable="true" data-id="'+d.id+'" data-deal="'+d.id+'"><div class="ch" style="margin:0 0 6px"><b>'+esc(d.client)+'</b><span class="amt">'+money(d.amount,d.currency)+'</span></div>'
     +(d.title?'<div class="small muted">'+esc(d.title)+'</div>':'')
     +(d.next_action?'<div class="small" style="margin-top:6px">→ '+esc(d.next_action)+(d.next_at?' <span class="num '+(d.next_at<S.today?'over':'faint')+'">'+esc(d.next_at.slice(5))+'</span>':'')+'</div>':
       (d.stage!=='paid'?'<div class="small over" style="margin-top:6px">no next step</div>':''))
@@ -400,6 +413,28 @@ function Clients(){
       return '<div class="col" data-key="'+s+'"><h3>'+esc(STAGE[s])+' <span class="faint num">'+g.length+'</span><span class="faint num" style="margin-left:auto">'+money(g.reduce((x,d)=>x+d.amount,0))+'</span></h3>'+g.map(dc).join('')+'</div>'}).join('')+'</div>'
     +(S.payments.length?'<div class="card" style="margin-top:14px"><div class="ch"><h2>Payments</h2></div><table><tbody>'
       +S.payments.slice(0,30).map(p=>'<tr><td class="num">'+esc(p.paid_at)+'</td><td>'+esc(p.client||'')+'</td><td class="muted">'+esc(p.note)+'</td><td class="right num">'+money(p.amount,p.currency)+'</td></tr>').join('')+'</tbody></table></div>':'');
+}
+function dealDrawer(){
+  const d=S.deals.find(x=>x.id===open.id);if(!d)return '<p class="muted">Deal not found.</p>';
+  const set=f=>'act({action:\'deal_set\',id:'+d.id+','+f+':this.value})';
+  const pays=S.payments.filter(p=>p.deal_id===d.id),left=Math.max(0,d.amount-(d.paid||0));
+  return '<div class="ch"><span class="small faint num">Deal #'+d.id+'</span><button class="btn sm" onclick="closeDrawer()">Close</button></div>'
+    +'<input class="dt" value="'+esc(d.client)+'" onchange="'+set('client')+'">'
+    +'<div class="fields"><label>What</label><input value="'+esc(d.title)+'" placeholder="What is sold" onchange="'+set('title')+'">'
+    +'<label>Stage</label>'+fieldSel('st',Object.entries(STAGE),d.stage,set('stage'))
+    +'<label>Amount</label><span style="display:flex;gap:8px"><input type="number" min="0" step="any" value="'+esc(d.amount)+'" onchange="'+set('amount')+'" style="flex:1">'
+      +'<input value="'+esc(d.currency)+'" maxlength="5" style="width:80px" onchange="'+set('currency')+'"></span>'
+    +'<label>Next step</label><input value="'+esc(d.next_action)+'" placeholder="Call, send proposal, follow up…" onchange="'+set('next_action')+'">'
+    +'<label>Next step date</label><input type="date" value="'+esc(d.next_at||'')+'" onchange="'+set('next_at')+'">'
+    +'<label>Project</label>'+fieldSel('pr',[['','None']].concat(S.projects.filter(p=>p.status!=='archive').map(p=>[p.id,p.name])),d.project_id,set('project_id'))
+    +'<label>Paid</label><span class="num">'+money(d.paid,d.currency)+(left&&d.amount?' <span class="faint">· '+money(left,d.currency)+' left</span>':'')+'</span></div>'
+    +'<div class="ch"><h2>Payments</h2></div>'
+    +(pays.length?'<table><tbody>'+pays.map(p=>'<tr><td class="num">'+esc(p.paid_at)+'</td><td class="muted">'+esc(p.note)+'</td><td class="right num">'+money(p.amount,p.currency)+'</td></tr>').join('')+'</tbody></table>':'<div class="empty">No payments yet.</div>')
+    +'<form class="quick" style="margin-top:10px" onsubmit="event.preventDefault();if(+this.a.value>0)act({action:\'pay\',id:'+d.id+',amount:+this.a.value,note:this.n.value},\'Payment recorded\')">'
+    +'<input name="a" type="number" min="0" step="any" placeholder="Amount received" style="max-width:170px"><input name="n" placeholder="Note"><button class="btn">Record</button></form>'
+    +'<div style="margin-top:22px;display:flex;gap:8px"><button class="btn sm" onclick="act({action:\'deal_set\',id:'+d.id+',stage:\'lost\'},\'Marked lost\')">Mark lost</button>'
+    +'<button class="btn sm" onclick="if(confirm(\'Delete this deal and its payments?\'))act({action:\'deal_delete\',id:'+d.id+'},\'Deleted\').then(closeDrawer)">Delete</button></div>'
+    +'<div class="small faint" style="margin-top:18px">Created '+esc(d.created_at)+' · updated '+esc(d.updated_at)+'</div>';
 }
 function addDeal(f){act({action:'deal_add',client:f.c.value,amount:+f.a.value||0,next_action:f.n.value,next_at:f.d.value,stage:'lead'},'Deal added')}
 
@@ -427,6 +462,25 @@ function Journal(){
     +'<div class="tabs2">'+[['','All'],['result','Results'],['decision','Decisions'],['blocker','Blockers'],['note','Notes']].map(([k,n])=>'<button class="'+(jk===k?'on':'')+'" onclick="jk=\''+k+'\';render()">'+n+'</button>').join('')+'</div>'
     +'<div class="card">'+(l.map(entryHtml).join('')||'<div class="empty">Empty.</div>')+'</div>';
 }
+
+/* ---------- snow: a quiet seasonal touch, toggled with the ❄ button ---------- */
+let snowOn=localStorage.getItem('agent-hq.snow')!=='off';
+(function(){
+  const cv=$('#snow'),cx=cv.getContext('2d'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let fl=[],dpr=1;
+  const size=()=>{dpr=devicePixelRatio||1;cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;
+    fl=Array.from({length:Math.round(innerWidth*innerHeight/11000)},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+      v:.2+Math.random()*.7,a:Math.random()*6.3,c:['·','*','+','.','·'][Math.floor(Math.random()*5)],o:.25+Math.random()*.5,s:9+Math.random()*7}))};
+  const frame=()=>{
+    cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,innerWidth,innerHeight);
+    if(snowOn&&!document.hidden){const col=getComputedStyle(document.documentElement).getPropertyValue('--ink-3');
+      fl.forEach(f=>{if(!still){f.y+=f.v;f.a+=.012;f.x+=Math.sin(f.a)*.3;if(f.y>innerHeight+10){f.y=-10;f.x=Math.random()*innerWidth}}
+        cx.globalAlpha=f.o;cx.fillStyle=col;cx.font=f.s+'px ui-monospace,Menlo,monospace';cx.fillText(f.c,f.x,f.y)})}
+    if(!still)requestAnimationFrame(frame)};
+  addEventListener('resize',size);size();frame();
+  const b=$('#snowbtn');b.style.opacity=snowOn?1:.45;
+  b.onclick=()=>{snowOn=!snowOn;localStorage.setItem('agent-hq.snow',snowOn?'on':'off');b.style.opacity=snowOn?1:.45;if(still)frame()};
+})();
 
 load();
 setInterval(()=>{if(!open&&!document.hidden&&!document.activeElement.matches('input,textarea,select'))load()},20000);

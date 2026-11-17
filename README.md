@@ -1,8 +1,10 @@
+<p align="center"><img src="docs/banner.png" alt="Agent HQ" width="100%"></p>
+
 # Agent HQ
 
 **Claude Code forgets everything between sessions. Agent HQ gives it a memory, a task list it keeps itself, and you a dashboard of every project it touches.**
 
-![Agent HQ task board](docs/tasks.png)
+![Agent HQ tour](docs/tour.gif)
 
 Every new Claude Code session starts from zero: it re-reads the codebase, re-discovers what was done yesterday, and loses the task you mentioned in passing an hour ago. A rule in `CLAUDE.md` is read once and fades by mid-conversation.
 
@@ -48,11 +50,14 @@ Needs `python3` (3.8+) on your PATH. macOS and Linux; Windows via WSL.
 | **No silent exits** | The Stop hook refuses to end a session that changed files and recorded nothing. |
 | **Dashboard** | Overview, projects by section, Board and List views with drag and drop, task drawer with subtasks, client pipeline, agent sessions, journal. Light and dark. Keys `1`-`6`, `n`, `Esc`. |
 | **Agent cost** | Reads your local Claude Code transcripts and attributes spend to projects by working directory. |
-| **Client pipeline** | Deals with a required next step and date, payments, money still owed. For freelancers and small studios. |
+| **Client pipeline** | Drag deals across stages, open a deal to edit amount, next step and date, record payments. For freelancers and small studios. |
 | **MCP server** | 12 tools (`briefing`, `task_add`, `task_update`, `log`, `import_projects`, `agent_cost`...) usable from Claude Code, Claude Desktop or any MCP client. |
 | **CLI** | `agent-hq` for you and for scripts: `agent-hq t add`, `agent-hq log`, `agent-hq scan --add`, `agent-hq cost`, `agent-hq ui`, `agent-hq doctor`. |
 
-![Overview](docs/overview.png)
+| | |
+|---|---|
+| ![Overview](docs/overview.png) | ![Tasks](docs/tasks.png) |
+| ![Projects](docs/projects.png) | ![Clients](docs/clients.png) |
 
 ## How it works
 

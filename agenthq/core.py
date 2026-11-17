@@ -478,6 +478,12 @@ def set_deal(conn, did, **fields):
     conn.commit()
 
 
+def delete_deal(conn, did):
+    conn.execute("DELETE FROM payments WHERE deal_id = ?", (did,))
+    conn.execute("DELETE FROM deals WHERE id = ?", (did,))
+    conn.commit()
+
+
 def pay(conn, deal_id, amount, note="", paid_at=None):
     d = conn.execute("SELECT * FROM deals WHERE id = ?", (deal_id,)).fetchone()
     if not d:

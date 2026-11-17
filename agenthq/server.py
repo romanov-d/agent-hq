@@ -25,11 +25,11 @@ _cost = {"at": 0.0, "data": None, "busy": False}
 
 
 def cost_cached(conn):
-    """Transcript parsing takes seconds on big histories: cache it, refresh in the background."""
-    if _cost["data"] is None:
-        _cost["data"] = core.agent_cost(conn, 30)
-        _cost["at"] = time.time()
-    elif time.time() - _cost["at"] > 300 and not _cost["busy"]:
+    """Transcript parsing can take seconds on a long history, so it never blocks a request:
+    the first call starts a background job and returns a placeholder, later calls get the
+    cached numbers, refreshed in the background every 5 minutes."""
+    stale = _cost["data"] is None or time.time() - _cost["at"] > 300
+    if stale and not _cost["busy"]:
         _cost["busy"] = True
 
         def refresh():
@@ -39,7 +39,8 @@ def cost_cached(conn):
             finally:
                 _cost["busy"] = False
         threading.Thread(target=refresh, daemon=True).start()
-    return _cost["data"]
+    return _cost["data"] or {"days": 30, "total": 0, "calls": 0, "by_project": {}, "by_day": {},
+                             "loading": True}
 
 
 def do_action(a):
@@ -70,6 +71,9 @@ def do_action(a):
     if act == "deal_set":
         fields = {k: v for k, v in a.items() if k in core.DEAL_FIELDS}
         core.set_deal(conn, int(a["id"]), **fields)
+        return {}
+    if act == "deal_delete":
+        core.delete_deal(conn, int(a["id"]))
         return {}
     if act == "pay":
         core.pay(conn, int(a["id"]), float(a["amount"]), a.get("note", ""))
