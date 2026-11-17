@@ -1,0 +1,309 @@
+#!/usr/bin/env python3
+"""agent-hq - command line for Agent HQ.
+
+The project is picked from the current folder, so most commands need no -p.
+
+  agent-hq                          state of the current project (same as `agent-hq status`)
+  agent-hq t add "title" [-d DATE] [-P 0-3] [--parent ID] [-a claude] [-b "context"]
+  agent-hq t start|review|done|drop ID
+  agent-hq t block ID "what we wait for"
+  agent-hq t body ID "context and acceptance criteria" [-a]   (-a appends)
+  agent-hq t ls [--all]
+  agent-hq log "what was done" [-k result|decision|blocker|note] [-t TASK]
+  agent-hq p ls | agent-hq p add [PATH] | agent-hq p set SLUG --status done --section game ...
+  agent-hq scan [ROOT ...] [--add]   find project folders on disk
+  agent-hq d add CLIENT AMOUNT [--stage talk] | agent-hq d move ID STAGE | agent-hq d pay ID AMOUNT
+  agent-hq cost [--days 30]          what agents cost, per project
+  agent-hq ui [--port 7788]          open the dashboard
+  agent-hq doctor                    check the installation
+"""
+import argparse
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+from agenthq import core  # noqa: E402
+
+TTY = sys.stdout.isatty()
+C = {k: (v if TTY else "") for k, v in
+     {"dim": "\033[2m", "b": "\033[1m", "g": "\033[32m", "y": "\033[33m", "r": "\033[0m"}.items()}
+
+
+def actor(args):
+    return getattr(args, "actor", None) or os.environ.get("AGENTHQ_ACTOR") or \
+        ("claude" if os.environ.get("CLAUDECODE") else "me")
+
+
+def current(conn, args, required=True):
+    ref = getattr(args, "project", None)
+    p = core.resolve_project(conn, ref) if ref else core.ensure_project(conn, os.getcwd())
+    if required and not p:
+        sys.exit("No project here. Run `agent-hq p add .` in the project folder or pass -p SLUG.")
+    return p
+
+
+# ---------------------------------------------------------------- commands
+
+def cmd_status(conn, args):
+    p = current(conn, args, required=False)
+    if p:
+        print(core.briefing(conn, p))
+        return
+    act = core.rows(conn, "SELECT * FROM projects WHERE status='active' ORDER BY updated_at DESC")
+    print(f"{C['b']}{len(act)} active projects{C['r']}  (run inside a project folder for details)")
+    for r in act[:30]:
+        n = conn.execute("SELECT COUNT(*) FROM tasks WHERE project_id=? AND status IN"
+                         " ('todo','doing','review','blocked')", (r["id"],)).fetchone()[0]
+        print(f"  {r['slug']:<28} {r['section']:<8} {n:>3} open  {C['dim']}{(r['note'] or '')[:70]}{C['r']}")
+
+
+def cmd_t_add(conn, args):
+    p = None if args.parent else current(conn, args, required=False)
+    tid = core.add_task(conn, args.title, p["id"] if p else None, args.parent, args.priority,
+                        args.due, args.assignee or "", args.body or "", actor(args))
+    t = core.get_task(conn, tid)
+    where = core.resolve_project(conn, t["project_id"])["slug"] if t["project_id"] else "inbox"
+    print(f"{C['g']}+{C['r']} #{tid} {args.title} -> {where}" +
+          (f" (subtask of #{args.parent})" if args.parent else ""))
+
+
+def cmd_t_status(status):
+    def run(conn, args):
+        for tid in args.ids:
+            t = core.set_task(conn, tid, status=status)
+            print(f"#{tid} {status}: {t['title']}")
+    return run
+
+
+def cmd_t_block(conn, args):
+    t = core.set_task(conn, args.id, status="blocked", blocked_by=args.reason)
+    core.log(conn, f"Blocked #{args.id} {t['title']}: {args.reason}", "blocker",
+             t["project_id"], args.id, actor(args))
+    print(f"#{args.id} blocked: {args.reason}")
+
+
+def cmd_t_body(conn, args):
+    t = core.get_task(conn, args.id)
+    body = (t["body"] + "\n\n" + args.text).strip() if args.append else args.text
+    core.set_task(conn, args.id, body=body)
+    print(f"#{args.id} body saved")
+
+
+def cmd_t_ls(conn, args):
+    p = current(conn, args, required=False) if not args.all else None
+    for t in core.list_tasks(conn, p["id"] if p else None):
+        due = f" {C['y']}{t['due']}{C['r']}" if t["due"] else ""
+        sub = "   " if t["parent_id"] else ""
+        print(f"{sub}#{t['id']:<5} {t['status']:<8} P{t['priority']} {t['title'][:90]}{due}"
+              f" {C['dim']}{t['project_slug'] or ''}{C['r']}")
+
+
+def cmd_log(conn, args):
+    p = None
+    if args.task:
+        p = {"id": core.get_task(conn, args.task)["project_id"]}
+    p = p or current(conn, args, required=False)
+    core.log(conn, args.text, args.kind, p["id"] if p else None, args.task, actor(args),
+             os.environ.get("CLAUDE_SESSION_ID", ""))
+    print(f"{C['g']}logged{C['r']} [{args.kind}]")
+
+
+def cmd_p_ls(conn, args):
+    q = "SELECT * FROM projects" + ("" if args.all else " WHERE status IN ('active','paused')") + \
+        " ORDER BY section, status, slug"
+    for r in core.rows(conn, q):
+        print(f"{r['id']:<4} {r['slug']:<30} {r['status']:<8} {r['section']:<8} {r['path'] or ''}")
+
+
+def cmd_p_add(conn, args):
+    path = os.path.abspath(args.path or ".")
+    p = core.register(conn, path, args.name)
+    print(f"{p['slug']} -> {p['path']} ({p['section']})")
+
+
+def cmd_p_set(conn, args):
+    p = core.resolve_project(conn, args.slug)
+    fields = {k: getattr(args, k) for k in ("name", "status", "section", "kind", "client",
+                                            "priority", "summary", "note") if getattr(args, k) is not None}
+    if args.parent is not None:
+        fields["parent_id"] = None if args.parent == "-" else core.resolve_project(conn, args.parent)["id"]
+    core.set_project(conn, p["id"], **fields)
+    print(f"{p['slug']} updated: {', '.join(fields) or 'nothing'}")
+
+
+def cmd_p_forget(conn, args):
+    p = core.resolve_project(conn, args.slug)
+    core.forget_project(conn, p["id"])
+    print(f"{p['slug']} removed from Agent HQ; its folder will not be auto-added again")
+
+
+def cmd_scan(conn, args):
+    roots = args.roots or [os.path.expanduser(d) for d in
+                           ("~/GitHub", "~/Projects", "~/code", "~/dev", "~/src", "~/repos",
+                            "~/work", "~/Desktop", "~/Documents")]
+    known = {r["path"] for r in conn.execute("SELECT path FROM projects")}
+    ignored = {r["path"] for r in conn.execute("SELECT path FROM ignored")}
+    new = [d for d in core.scan(roots, args.depth) if d not in known and d not in ignored]
+    for d in new:
+        if args.add:
+            p = core.register(conn, d, status=args.status)
+            print(f"{C['g']}+{C['r']} {p['slug']:<30} {p['section']:<8} {d}")
+        else:
+            print(f"  {core.detect_section(d):<8} {d}")
+    if not args.add:
+        print(f"\n{len(new)} new project folders. Add them with: agent-hq scan --add" + (
+            " " + " ".join(args.roots) if args.roots else ""))
+
+
+def cmd_d_add(conn, args):
+    p = core.resolve_project(conn, args.project) if args.project else None
+    did = core.add_deal(conn, args.client, args.amount, args.title or "", args.stage,
+                        p["id"] if p else None, args.currency, args.next or "", args.next_at)
+    print(f"deal #{did} {args.client} {args.amount} {args.currency} [{args.stage}]")
+
+
+def cmd_d_move(conn, args):
+    core.set_deal(conn, args.id, stage=args.stage)
+    print(f"deal #{args.id} -> {args.stage}")
+
+
+def cmd_d_pay(conn, args):
+    core.pay(conn, args.id, args.amount, args.note or "")
+    print(f"payment {args.amount} recorded for deal #{args.id}")
+
+
+def cmd_cost(conn, args):
+    c = core.agent_cost(conn, args.days)
+    names = {str(r["id"]): r["slug"] for r in conn.execute("SELECT id, slug FROM projects")}
+    print(f"{C['b']}${c['total']:,.2f}{C['r']} on {c['calls']:,} model calls, last {args.days} days")
+    for pid, usd in sorted(c["by_project"].items(), key=lambda x: -x[1])[:20]:
+        print(f"  ${usd:>9,.2f}  {names.get(pid, pid)}")
+
+
+def cmd_ui(conn, args):
+    from agenthq import server
+    server.serve(args.port, open_browser=not args.no_open)
+
+
+def cmd_doctor(conn, args):
+    from agenthq import doctor
+    sys.exit(doctor.run(conn))
+
+
+# ---------------------------------------------------------------- parser
+
+def main():
+    ap = argparse.ArgumentParser(prog="agent-hq", description="Agent HQ: memory and task tracking "
+                                 "for Claude Code projects.")
+    ap.add_argument("-p", "--project", help="project slug or id (default: current folder)")
+    ap.add_argument("--actor", help="who writes: me, claude or an agent name")
+    sub = ap.add_subparsers(dest="cmd")
+
+    sub.add_parser("status").set_defaults(fn=cmd_status)
+
+    t = sub.add_parser("t", help="tasks").add_subparsers(dest="tcmd", required=True)
+    a = t.add_parser("add")
+    a.add_argument("title")
+    a.add_argument("-d", "--due")
+    a.add_argument("-P", "--priority", type=int, default=2, choices=[0, 1, 2, 3])
+    a.add_argument("--parent", type=int)
+    a.add_argument("-a", "--assignee")
+    a.add_argument("-b", "--body")
+    a.set_defaults(fn=cmd_t_add)
+    for st, name in (("doing", "start"), ("review", "review"), ("done", "done"), ("drop", "drop"),
+                     ("todo", "reopen")):
+        x = t.add_parser(name)
+        x.add_argument("ids", type=int, nargs="+")
+        x.set_defaults(fn=cmd_t_status(st))
+    b = t.add_parser("block")
+    b.add_argument("id", type=int)
+    b.add_argument("reason")
+    b.set_defaults(fn=cmd_t_block)
+    bd = t.add_parser("body")
+    bd.add_argument("id", type=int)
+    bd.add_argument("text")
+    bd.add_argument("-a", "--append", action="store_true")
+    bd.set_defaults(fn=cmd_t_body)
+    ls = t.add_parser("ls")
+    ls.add_argument("--all", action="store_true")
+    ls.set_defaults(fn=cmd_t_ls)
+
+    lg = sub.add_parser("log", help="write to the project journal")
+    lg.add_argument("text")
+    lg.add_argument("-k", "--kind", default="note", choices=core.ENTRY_KINDS)
+    lg.add_argument("-t", "--task", type=int)
+    lg.set_defaults(fn=cmd_log)
+
+    p = sub.add_parser("p", help="projects").add_subparsers(dest="pcmd", required=True)
+    x = p.add_parser("ls")
+    x.add_argument("--all", action="store_true")
+    x.set_defaults(fn=cmd_p_ls)
+    x = p.add_parser("add")
+    x.add_argument("path", nargs="?")
+    x.add_argument("--name")
+    x.set_defaults(fn=cmd_p_add)
+    x = p.add_parser("set")
+    x.add_argument("slug")
+    x.add_argument("--name")
+    x.add_argument("--status", choices=core.PROJECT_STATUSES)
+    x.add_argument("--section", choices=core.SECTIONS)
+    x.add_argument("--kind", choices=["own", "client"])
+    x.add_argument("--client")
+    x.add_argument("--priority", type=int, choices=[0, 1, 2, 3])
+    x.add_argument("--summary")
+    x.add_argument("--note")
+    x.add_argument("--parent", help="parent project slug, '-' to detach")
+    x.set_defaults(fn=cmd_p_set)
+    x = p.add_parser("forget")
+    x.add_argument("slug")
+    x.set_defaults(fn=cmd_p_forget)
+
+    s = sub.add_parser("scan", help="find project folders on disk")
+    s.add_argument("roots", nargs="*")
+    s.add_argument("--add", action="store_true", help="register what was found")
+    s.add_argument("--depth", type=int, default=3)
+    s.add_argument("--status", default="active", choices=core.PROJECT_STATUSES)
+    s.set_defaults(fn=cmd_scan)
+
+    d = sub.add_parser("d", help="deals").add_subparsers(dest="dcmd", required=True)
+    x = d.add_parser("add")
+    x.add_argument("client")
+    x.add_argument("amount", type=float)
+    x.add_argument("--title")
+    x.add_argument("--stage", default="lead", choices=core.DEAL_STAGES)
+    x.add_argument("--currency", default="USD")
+    x.add_argument("--next", help="next action")
+    x.add_argument("--next-at", help="date of the next action, YYYY-MM-DD")
+    x.set_defaults(fn=cmd_d_add)
+    x = d.add_parser("move")
+    x.add_argument("id", type=int)
+    x.add_argument("stage", choices=core.DEAL_STAGES)
+    x.set_defaults(fn=cmd_d_move)
+    x = d.add_parser("pay")
+    x.add_argument("id", type=int)
+    x.add_argument("amount", type=float)
+    x.add_argument("--note")
+    x.set_defaults(fn=cmd_d_pay)
+
+    c = sub.add_parser("cost", help="agent spend per project")
+    c.add_argument("--days", type=int, default=30)
+    c.set_defaults(fn=cmd_cost)
+
+    u = sub.add_parser("ui", help="open the dashboard")
+    u.add_argument("--port", type=int, default=int(os.environ.get("AGENTHQ_PORT", 7788)))
+    u.add_argument("--no-open", action="store_true")
+    u.set_defaults(fn=cmd_ui)
+
+    sub.add_parser("doctor", help="check the installation").set_defaults(fn=cmd_doctor)
+
+    args = ap.parse_args()
+    conn = core.connect()
+    try:
+        (getattr(args, "fn", None) or cmd_status)(conn, args)
+    except ValueError as e:
+        sys.exit(f"agent-hq: {e}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,12 @@
+{
+  "name": "agent-hq",
+  "owner": { "name": "Denis Romanov" },
+  "description": "Agent HQ: project memory, self-kept tasks and a local dashboard for Claude Code.",
+  "plugins": [
+    {
+      "name": "agent-hq",
+      "source": "./",
+      "description": "Project memory, self-kept tasks, a local dashboard and agent cost tracking for Claude Code."
+    }
+  ]
+}

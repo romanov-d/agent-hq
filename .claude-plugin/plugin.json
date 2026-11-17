@@ -1,0 +1,11 @@
+{
+  "name": "agent-hq",
+  "version": "0.1.0",
+  "description": "Mission control for Claude Code: project memory across sessions, tasks the agent keeps itself, a local dashboard and agent cost per project.",
+  "author": { "name": "Denis Romanov" },
+  "homepage": "https://github.com/romanov-d/agent-hq",
+  "repository": "https://github.com/romanov-d/agent-hq",
+  "license": "MIT",
+  "icon": "./.claude-plugin/icon.png",
+  "keywords": ["memory", "tasks", "project-management", "hooks", "mcp", "dashboard", "crm"]
+}
