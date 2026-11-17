@@ -46,6 +46,7 @@ Needs `python3` (3.8+) on your PATH. macOS and Linux; Windows via WSL.
 | | |
 |---|---|
 | **Memory across sessions** | A briefing at every session start: summary, where we left off, open tasks, recent journal. |
+| **Skill pack** | Seven skills that load automatically: spec first, debug loop, review before done, UI design, ship checklist, security pass, and the HQ protocol. |
 | **Tasks the agent keeps** | Created when you ask, subtasks for anything bigger than one step, statuses `todo → doing → review → done`, `blocked` with what we wait for. |
 | **No silent exits** | The Stop hook refuses to end a session that changed files and recorded nothing. |
 | **Dashboard** | Overview, projects by section, Board and List views with drag and drop, task drawer with subtasks, client pipeline, agent sessions, journal. Light and dark. Keys `1`-`6`, `n`, `Esc`. |
@@ -76,7 +77,23 @@ Needs `python3` (3.8+) on your PATH. macOS and Linux; Windows via WSL.
 | `Stop` | agent wants to stop | blocks once if work happened and nothing was recorded |
 | `SessionEnd` | session closes | closes the session row, so time per project is known |
 
-The plugin also ships a skill (`agent-hq`) with the working protocol, and slash commands `/agent-hq:onboard`, `/agent-hq:brief`, `/agent-hq:wrap`, `/agent-hq:dashboard`.
+Slash commands: `/agent-hq:onboard`, `/agent-hq:brief`, `/agent-hq:wrap`, `/agent-hq:dashboard`.
+
+### Skill pack
+
+Installing Agent HQ also gives Claude a set of working habits. Skills load on their own when the situation matches; you don't call them.
+
+| Skill | Kicks in when | What it makes Claude do |
+|---|---|---|
+| `agent-hq` | any work in a project | the HQ protocol: record tasks, move statuses, write result entries |
+| `spec-first` | a feature or loosely described request | look at the code first, write goal, scope and an acceptance criterion before coding |
+| `debug-loop` | a bug, a failing test, "it doesn't work" | reproduce, one hypothesis at a time, fix the cause, prove it; stop after two failed fixes |
+| `review-before-done` | before saying done or committing | read the diff as a stranger: edges, escaping, secrets, checks actually run |
+| `ui-design` | building or restyling UI | tokens, hierarchy, all states, accessibility, and none of the generated-UI clichés |
+| `ship-checklist` | deploy, release, publish | explicit go-ahead, green checks, env present, rollback known, smoke test, write down where prod lives |
+| `security-pass` | auth, payments, uploads, webhooks, secrets | injection, XSS, per-object authorization, rate limits, webhook signatures, secrets hygiene |
+
+All skills are plain Markdown in [`skills/`](skills); edit or delete any of them.
 
 ### Projects are detected, not configured
 

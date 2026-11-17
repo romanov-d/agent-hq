@@ -167,6 +167,27 @@ class Mcp(Base):
         self.assertEqual(out[5]["error"]["code"], -32601)
 
 
+class Plugin(unittest.TestCase):
+    def test_every_skill_has_frontmatter(self):
+        import glob
+        import re
+        skills = glob.glob(os.path.join(ROOT, "skills", "*", "SKILL.md"))
+        self.assertGreaterEqual(len(skills), 7)
+        for f in skills:
+            text = open(f, encoding="utf-8").read()
+            m = re.match(r"---\nname: ([a-z0-9-]+)\ndescription: (.+?)\n---\n", text, re.S)
+            self.assertIsNotNone(m, f)
+            self.assertEqual(m.group(1), os.path.basename(os.path.dirname(f)))
+            self.assertGreater(len(m.group(2)), 60, f)
+            self.assertFalse(m.group(1).startswith("claude"), f)
+
+    def test_manifests_are_valid_json(self):
+        for f in (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json", ".mcp.json",
+                  "hooks/hooks.json", "agenthq/prices.json"):
+            with open(os.path.join(ROOT, f), encoding="utf-8") as fh:
+                json.load(fh)
+
+
 class Server(Base):
     def test_actions_validate(self):
         from agenthq import server
